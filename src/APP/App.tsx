@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect } from "react";
 import "./App.css";
-import { Todolist } from "./Todolist";
-import { AddItemForm } from "./AddItemForm";
+import { Todolist } from "../Todolist";
+import { AddItemForm } from "../AddItemForm";
 import AppBar from "@mui/material/AppBar";
 import Toolbar from "@mui/material/Toolbar";
 import IconButton from "@mui/material/IconButton";
@@ -13,6 +13,7 @@ import Paper from "@mui/material/Paper";
 import { Menu } from "@mui/icons-material";
 import {
   addTodolistAC,
+  addTodoListTC,
   changeTodolistFilterAC,
   changeTodolistTitleAC,
   FilterValuesType,
@@ -20,24 +21,24 @@ import {
   removeTodolistAC,
   setTodoListsAC,
   TodolistDomainType,
-} from "./state/todolists-reducer";
+} from "../state/todolists-reducer";
 import {
-//   addTaskAC,
+  //   addTaskAC,
   changeTaskStatusAC,
   changeTaskTitleAC,
   createTasksTC,
   removeTaskAC,
   removeTasksTC,
   updateTasksTC,
-} from "./state/tasks-reducer";
+} from "../state/tasks-reducer";
 import { useDispatch, useSelector } from "react-redux";
-import {
-  AppDispatchType,
-  AppRootStateType,
-  useAppDispach,
-} from "./state/store";
-import { TaskStatuses, TaskType, todolistsAPI } from "./api/todolists-api";
+
+import { TaskStatuses, TaskType, todolistsAPI } from "../api/todolists-api";
 import axios from "axios";
+import LinearProgress from "@mui/material/LinearProgress/LinearProgress";
+import CustomizedSnackbars from "../components/ErrorSnackBar/ErrorSnackBar";
+import { AppRootStateType, useAppDispach, AppDispatchType } from "./store";
+import { RequestStatusType } from "./app-reducer";
 
 export type TasksStateType = {
   [key: string]: Array<TaskType>;
@@ -50,17 +51,19 @@ function App() {
   const tasks = useSelector<AppRootStateType, TasksStateType>(
     (state) => state.tasks
   );
+  const status = useSelector <AppRootStateType, RequestStatusType>(state=>state.app.status)
   const dispatch = useAppDispach();
+  
 
   const removeTask = useCallback(function (id: string, todolistId: string) {
     // const action = removeTaskAC(id, todolistId);
-    dispatch(removeTasksTC(todolistId,id));
+    dispatch(removeTasksTC(todolistId, id));
   }, []);
 
   const addTask = useCallback(function (title: string, todolistId: string) {
     // const action = addTaskAC(title, todolistId);
 
-    dispatch(createTasksTC(todolistId,title));
+    dispatch(createTasksTC(todolistId, title));
   }, []);
 
   const changeStatus = useCallback(function (
@@ -69,7 +72,7 @@ function App() {
     todolistId: string
   ) {
     // const action = changeTaskStatusAC(id, status, todolistId);
-    dispatch(updateTasksTC(todolistId,id,status));
+    dispatch(updateTasksTC(todolistId, id, status));
   },
   []);
 
@@ -104,8 +107,8 @@ function App() {
 
   const addTodolist = useCallback(
     (title: string) => {
-      const action = addTodolistAC(title);
-      dispatch(action);
+      // const action = addTodolistAC(title);
+      dispatch(addTodoListTC(title));
     },
     [dispatch]
   );
@@ -116,6 +119,7 @@ function App() {
 
   return (
     <div className="App">
+      <CustomizedSnackbars />
       <AppBar position="static">
         <Toolbar>
           <IconButton edge="start" color="inherit" aria-label="menu">
@@ -124,6 +128,7 @@ function App() {
           <Typography variant="h6">News</Typography>
           <Button color="inherit">Login</Button>
         </Toolbar>
+       { status === "loading"? <LinearProgress />: <div></div>}
       </AppBar>
       <Container fixed>
         <Grid container style={{ padding: "20px" }}>

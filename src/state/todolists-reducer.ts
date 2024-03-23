@@ -1,6 +1,7 @@
 import { v1 } from "uuid";
 import { TodolistType, todolistsAPI } from "../api/todolists-api";
 import { Dispatch } from "redux";
+import { ActionsErrorType, setAppStatusAC } from "../APP/app-reducer";
 // import { Dispatch } from "react";
 
 export type RemoveTodolistActionType = {
@@ -119,10 +120,22 @@ export const setTodoListsAC = (todolists: Array<TodolistType>) =>
     todolists,
   } as const);
 
-   export const getTodosTC=()=> (dispatch:Dispatch) => {
+   export const getTodosTC=()=> (dispatch:Dispatch<ActionsType|ActionsErrorType>) => {
+    dispatch(setAppStatusAC('loading'))
     // внутри санки можно делать побочные эффекты (запросы на сервер)
     todolistsAPI.getTodolists().then(res => {
       // и диспатчить экшены (action) или другие санки (thunk)
       dispatch(setTodoListsAC(res.data))
+      dispatch(setAppStatusAC('succeeded'))
+    })
+  }
+
+  export const addTodoListTC=(title:string)=>(dispatch:Dispatch<ActionsType|ActionsErrorType>)=>{
+    dispatch(setAppStatusAC('loading'))
+    // внутри санки можно делать побочные эффекты (запросы на сервер)
+    todolistsAPI.createTodolist(title).then(res => {
+      // и диспатчить экшены (action) или другие санки (thunk)
+      dispatch(addTodolistAC(title))
+      dispatch(setAppStatusAC('succeeded'))
     })
   }

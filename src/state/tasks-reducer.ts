@@ -1,4 +1,4 @@
-import { TasksStateType } from "../App";
+import { TasksStateType } from "../APP/App";
 import { v1 } from "uuid";
 import {
   AddTodolistActionType,
@@ -13,7 +13,8 @@ import {
   todolistsAPI,
 } from "../api/todolists-api";
 import { Dispatch } from "redux";
-import { AppRootStateType } from "./store";
+import { AppRootStateType } from "../APP/store";
+import { setAppErrorAC, setAppStatusAC } from "../APP/app-reducer";
 
 export type RemoveTaskActionType = {
   type: "REMOVE-TASK";
@@ -212,10 +213,12 @@ export const setTasks = (todoId: string, tasks: TaskType[]) =>
   ({ type: "SET-TASKS", tasks, todoId } as const);
 
 export const getTasksTC = (todoId: string) => (dispatch: Dispatch) => {
+  dispatch(setAppStatusAC("loading"));
   // внутри санки можно делать побочные эффекты (запросы на сервер)
   todolistsAPI.getTasks(todoId).then((res) => {
     // и диспатчить экшены (action) или другие санки (thunk)
     dispatch(setTasks(todoId, res.data.items));
+    dispatch(setAppStatusAC("succeeded"));
   });
 };
 export type CreateTask = ReturnType<typeof setTask>;
@@ -225,8 +228,17 @@ export const createTasksTC =
   (todoListId: string, title: string) => (dispatch: Dispatch) => {
     // внутри санки можно делать побочные эффекты (запросы на сервер)
     todolistsAPI.createTask(todoListId, title).then((res) => {
-      // и диспатчить экшены (action) или другие санки (thunk)
-      dispatch(setTask(res.data.data.item));
+      if (res.data.resultCode === 0) {
+        // и диспатчить экшены (action) или другие санки (thunk)
+        dispatch(setTask(res.data.data.item));
+      } else {
+        if (res.data.messages.length) {
+          dispatch(setAppErrorAC(res.data.messages[0]));
+        } else {
+          dispatch(setAppErrorAC("ошибка произошла"));
+        }
+        dispatch(setAppStatusAC("failed"));
+      }
     });
   };
 export const removeTasksTC =
@@ -239,25 +251,26 @@ export const removeTasksTC =
       }
     });
   };
-  export const updateTasksTC =
-  (todoListId: string, taskId: string,status:TaskStatuses) => (dispatch: Dispatch,getState:()=>AppRootStateType) => {
-    const tasks =getState().tasks
-    const task=tasks[todoListId].find((t)=>(t.id===taskId))
+export const updateTasksTC =
+  (todoListId: string, taskId: string, status: TaskStatuses) =>
+  (dispatch: Dispatch, getState: () => AppRootStateType) => {
+    const tasks = getState().tasks;
+    const task = tasks[todoListId].find((t) => t.id === taskId);
 
-    if(task){
-    const model: UpdateTaskModelType   ={
+    if (task) {
+      const model: UpdateTaskModelType = {
         title: task?.title,
         description: task?.description,
         status,
         priority: task.priority,
         startDate: task.startDate,
-        deadline: task.startDate
-    }
-    todolistsAPI.updateTask(todoListId, taskId,model).then((res) => {
+        deadline: task.startDate,
+      };
+      todolistsAPI.updateTask(todoListId, taskId, model).then((res) => {
         // и диспатчить экшены (action) или другие санки (thunk)
         if (res.data.resultCode === 0) {
           dispatch(changeTaskStatusAC(taskId, status, todoListId));
         }
       });
-    };
-  }
+    }
+  };

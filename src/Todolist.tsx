@@ -7,7 +7,7 @@ import { Delete } from '@mui/icons-material';
 import {Task} from './Task'
 import {TaskStatuses, TaskType} from './api/todolists-api'
 import {FilterValuesType} from './state/todolists-reducer'
-import { useAppDispach } from './state/store';
+import { useAppDispach } from './APP/store';
 import { getTasksTC } from './state/tasks-reducer';
 
 type PropsType = {
